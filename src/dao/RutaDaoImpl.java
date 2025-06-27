@@ -1,13 +1,18 @@
 package dao;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import config.Conexion;
+import model.EstadisticaRuta;
 import model.Nodo;
 import model.Ruta;
 /*
@@ -26,13 +31,15 @@ MODIFICACIONES																			 #
 */
 public class RutaDaoImpl implements RutaDao {
 	 private Connection conexion;
-
+	 private NodoDao nodoDao;
 	 //Constructor para la conexion con la base de datos.
 	 public RutaDaoImpl(Connection conexion) {
 	        this.conexion = conexion;
+	    	
 			try {
 	            try {
 					this.conexion = Conexion.getConexion();
+					this.nodoDao = new NodoDaoImpl(Conexion.getConexion());
 				} catch (ClassNotFoundException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -62,6 +69,55 @@ public class RutaDaoImpl implements RutaDao {
 		}
 
 	
+	public Map<Ruta, Integer> obtenerEstadisticaRuta(LocalDate fecha) {
+		 Map<Ruta, Integer> conteoRutas = new LinkedHashMap<>();
+		 String sql = """
+		            SELECT 
+		                r.id_ruta, 
+		                r.origen_id, 
+		                r.destino_id, 
+		                r.distancia, 
+		                COUNT(*) AS cantidad
+		            FROM 
+		                historial_ruta hr
+		            JOIN 
+		                ruta r ON hr.rutaConsultada = r.id_ruta
+		            WHERE 
+		                hr.fecha_consulta >= ?
+		            GROUP BY 
+		                r.id_ruta, r.origen_id, r.destino_id, r.distancia
+		            ORDER BY 
+		                cantidad DESC
+		        """;
+
+		 try (PreparedStatement stmt = conexion.prepareStatement(sql)){
+			 //Rellenamos el valor de la fecha
+			 	stmt.setDate(1, Date.valueOf(fecha));
+			 	//Ejecutamos la consulta
+	            ResultSet rs = stmt.executeQuery();
+	            
+	            while (rs.next()) {
+	                Ruta ruta = new Ruta();
+	                ruta.setId_ruta(rs.getLong("id_ruta"));
+
+	                Nodo origen = nodoDao.obtenerNodoPorId(rs.getLong("origen_id"));
+	                Nodo destino = nodoDao.obtenerNodoPorId(rs.getLong("destino_id"));
+
+	                ruta.setOrigen(origen);
+	                ruta.setDestino(destino);
+	                ruta.setDistancia(rs.getDouble("distancia"));
+
+	                int cantidad = rs.getInt("cantidad");
+	                conteoRutas.put(ruta, cantidad);
+	            }
+
+
+		 }
+		 catch(SQLException e) {
+			 e.printStackTrace();
+		 }
+		 return conteoRutas;
+	}
 
 
 	

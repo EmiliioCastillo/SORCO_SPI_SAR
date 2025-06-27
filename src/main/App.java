@@ -1,5 +1,7 @@
 package main;
 
+import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -10,13 +12,19 @@ import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -28,6 +36,9 @@ import model.HistorialRuta;
 import paginator.PageRender;
 import service.NodoService;
 import service.NodoServiceImpl;
+import service.RutaService;
+import service.RutaServiceImpl;
+import utils.EstadisticasResultado;
 import service.HistorialRutaService;
 import service.HistorialRutaServiceImpl;
 public class App extends Application {
@@ -93,7 +104,7 @@ public class App extends Application {
         // Eventos
         cardRutas.setOnMouseClicked(e -> mostrarCalculadorRutas());
         cardHistorialRuta.setOnMouseClicked(e -> mostrarHistorialRuta());
-        cardEstadisticasRuta.setOnMouseClicked(e -> mostrarGeneradorPDF());
+        cardEstadisticasRuta.setOnMouseClicked(e -> mostrarEstadisticas());
         cardSalir.setOnMouseClicked(e -> primaryStage.close());
 
         mainScene = new Scene(mainGrid, 1000, 600);
@@ -217,6 +228,9 @@ public class App extends Application {
         TextField campoBusqueda = new TextField();
         campoBusqueda.setPromptText("Buscar por ciudad de origen o destino..");
         campoBusqueda.setPrefWidth(400);
+        DatePicker datePicker = new DatePicker();
+        datePicker.setPromptText("Buscar por fecha");
+
         campoBusqueda.setStyle("-fx-font-size: 14px;");
         // Tabla
         TableView<HistorialRuta> tabla = new TableView<>();
@@ -264,14 +278,38 @@ public class App extends Application {
         });
 
         btnSiguiente.setOnAction(e -> {
-            paginaActual.set(paginaActual.get() + 1);
+            paginaActual.set(paginaActual.get() + 1);	
             actualizarTabla.run();
         });
-        	botonBuscar.setOnAction(e -> {
-        	
+        botonBuscar.setOnAction(e -> {
+            String textoBusqueda = campoBusqueda.getText().trim();
+            LocalDate fechaSeleccionada = datePicker.getValue();
+
+            // Usar null si no hay valor
+            String nombre = textoBusqueda.isEmpty() ? null : textoBusqueda;
+            Date fechaConsulta = (fechaSeleccionada != null) ? Date.valueOf(fechaSeleccionada) : null;
+
+            // Reiniciar paginación
+            paginaActual.set(1);
+            
+            // Usar el servicio de búsqueda
+            PageRender<HistorialRuta> page = hrService.consultarPorNombreOFecha(
+                nombre, 
+                fechaConsulta, 
+                paginaActual.get(), 
+                tamañoPagina
+            );
+            
+            // Actualizar tabla y paginación
+            tabla.getItems().setAll(page.getContenidoPaginaActual());
+            etiquetaPagina.setText("Página " + paginaActual.get() + " de " + page.getTotalPaginas());
+            
+            // Controlar botones de paginación
+            btnAnterior.setDisable(paginaActual.get() <= 1);
+            btnSiguiente.setDisable(paginaActual.get() >= page.getTotalPaginas());
         });
         actualizarTabla.run(); // Primera carga
-        HBox buscador = new HBox(10, campoBusqueda, botonBuscar);
+        HBox buscador = new HBox(10, campoBusqueda, datePicker, botonBuscar);
         // Agregar componentes al layout
         grid.add(titulo, 0, 0);
         grid.add(buscador, 0, 1);
@@ -285,31 +323,77 @@ public class App extends Application {
 
 
 
-    private void mostrarGeneradorPDF() {
+    private void mostrarEstadisticas() {
         GridPane grid = new GridPane();
         grid.setAlignment(Pos.CENTER);
         grid.setVgap(20);
         grid.setPadding(new Insets(20));
-        
-        Label titulo = new Label("Generar Reporte PDF");
-        titulo.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-        
-        Button btnGenerar = new Button("Generar PDF");
-        btnGenerar.setStyle("-fx-font-size: 16px; -fx-padding: 10 20;");
-        
-        Label lblEstado = new Label();
-        lblEstado.setStyle("-fx-text-fill: #009900;");
-        
-        btnGenerar.setOnAction(e -> {
-            //rutaService.generarPDFReporte();
-            lblEstado.setText("PDF generado exitosamente!");
-        });
-        
+
+        Label titulo = new Label("Top Ciudades Más Consultadas");
         grid.add(titulo, 0, 0);
-        grid.add(btnGenerar, 0, 1);
-        grid.add(lblEstado, 0, 2);
-        
+
+        RutaService service = new RutaServiceImpl();
+        LocalDate fecha = LocalDate.now(); // Usar fecha actual
+
+        EstadisticasResultado resultado = service.obtenerEstadisticasRuta(fecha);
+
+        // Mostrar gráfico de ciudades
+        if (resultado.getCiudades() == null || resultado.getCiudades().isEmpty()) {
+            Label noData = new Label("No se encontraron datos estadísticos");
+            noData.setStyle("-fx-text-fill: red;");
+            grid.add(noData, 0, 1);
+        } else {
+            mostrarGraficoCiudades(resultado.getCiudades(), resultado.getFrecuencias(), grid);
+        }
+
+        // Mostrar ciudad más frecuente
+        Label resumen = new Label("Ciudad más consultada: " + resultado.getCiudadMasFrecuente());
+        grid.add(resumen, 0, 2);
+
         agregarEscenaConVolver(grid);
+    }
+
+    private void mostrarGraficoCiudades(List<String> ciudades, List<Integer> frecuencias, GridPane grid) {
+        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis yAxis = new NumberAxis();
+        yAxis.setAutoRanging(true);
+        yAxis.setTickUnit(1);
+
+        xAxis.setLabel("Ciudades");
+        yAxis.setLabel("Frecuencia de consultas");
+        xAxis.setTickLabelRotation(30);
+
+        BarChart<String, Number> barChart = new BarChart<>(xAxis, yAxis);
+        barChart.setTitle("Top " + ciudades.size() + " Ciudades");
+        barChart.setLegendVisible(false);
+        barChart.setCategoryGap(20);
+        barChart.setBarGap(5);
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        for (int i = 0; i < ciudades.size(); i++) {
+            XYChart.Data<String, Number> data = new XYChart.Data<>(ciudades.get(i), frecuencias.get(i));
+            series.getData().add(data);
+            
+            // Añadir tooltip
+            Tooltip tooltip = new Tooltip(ciudades.get(i) + ": " + frecuencias.get(i) + " consultas");
+            data.nodeProperty().addListener((obs, oldNode, newNode) -> {
+                if (newNode != null) {
+                    Tooltip.install(newNode, tooltip);
+                    newNode.setOnMouseEntered(event -> newNode.setStyle("-fx-bar-fill: #3498db;"));
+                    newNode.setOnMouseExited(event -> newNode.setStyle("-fx-bar-fill: #2c3e50;"));
+                }
+            });
+        }
+
+        barChart.getData().add(series);
+        barChart.setStyle("-fx-bar-fill: #2c3e50;"); // Color de barras
+        
+        // Limitar a las top 10 ciudades si hay muchas
+        if (ciudades.size() > 10) {
+            barChart.setTitle("Top 10 Ciudades");
+        }
+
+        grid.add(barChart, 0, 1);
     }
 
     private void agregarEscenaConVolver(GridPane grid) {

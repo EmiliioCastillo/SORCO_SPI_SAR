@@ -24,7 +24,7 @@ MODIFICACIONES																			 #
 public interface HistorialRutaDao {
 
 	PageRender<HistorialRuta> consultarHistorialRutas(int pagina, int tamañoPagina);
-	PageRender<HistorialRuta> consultarPorNombreOFecha(String nombre, Date fechaConsulta, int pagina, int tamañoPagina);
+	PageRender<HistorialRuta> consultarPorNombreOFecha(String nombre_ciudad, Date fechaConsulta, int pagina, int tamañoPagina);
 	void guardarHistorial(Long idRuta);
 }
 	

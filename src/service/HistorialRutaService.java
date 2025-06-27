@@ -10,6 +10,6 @@ public interface HistorialRutaService {
 
 	
 	PageRender<HistorialRuta> consultarTodasLasRutas(int pagina, int tamañoPagina);
-	PageRender<HistorialRuta> consultarPorNombreOFecha(String nombre, Date fechaConsulta, int pagina, int tamañoPagina);
+	PageRender<HistorialRuta> consultarPorNombreOFecha(String nombre_ciudad, Date fechaConsulta, int pagina, int tamañoPagina);
 	void guardarHistorialRuta(Long idRuta);
 }

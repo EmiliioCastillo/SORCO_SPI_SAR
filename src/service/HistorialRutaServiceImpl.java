@@ -35,10 +35,10 @@ public class HistorialRutaServiceImpl implements HistorialRutaService{
 
 
 	@Override
-	public PageRender<HistorialRuta> consultarPorNombreOFecha(String nombre, Date fechaConsulta, int pagina,
-			int tamañoPagina) {
-		// TODO Auto-generated method stub
-		return null;
+	public PageRender<HistorialRuta> consultarPorNombreOFecha(String nombre_ciudad, Date fechaConsulta, int pagina, int tamañoPagina) {
+	   
+	    String normalizedNombre = (nombre_ciudad != null && nombre_ciudad.isEmpty()) ? null : nombre_ciudad;
+	    return hrDao.consultarPorNombreOFecha(normalizedNombre, fechaConsulta, pagina, tamañoPagina);
 	}
 
 

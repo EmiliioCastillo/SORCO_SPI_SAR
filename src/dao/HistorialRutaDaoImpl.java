@@ -124,12 +124,87 @@ public class HistorialRutaDaoImpl implements HistorialRutaDao{
 
 
 
-	@Override
-	public PageRender<HistorialRuta> consultarPorNombreOFecha(String nombre, Date fechaConsulta, int pagina,
-			int tamañoPagina) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	 @Override
+	 public PageRender<HistorialRuta> consultarPorNombreOFecha(String nombre_ciudad, Date fechaConsulta, int pagina, int tamañoPagina) {
+	     
+	     String selectSQL = "SELECT \n"
+	          + "    hr.id_historial,\n"
+	          + "    n1.nombre_ciudad AS origen,\n"
+	          + "    n2.nombre_ciudad AS destino,\n"
+	          + "    hr.fecha_consulta\n"
+	          + "FROM historial_ruta hr\n"
+	          + "INNER JOIN ruta r ON hr.rutaConsultada = r.id_ruta\n"
+	          + "INNER JOIN nodo n1 ON r.origen_id = n1.id_nodo\n"
+	          + "INNER JOIN nodo n2 ON r.destino_id = n2.id_nodo\n"
+	          + "WHERE (LOWER(n1.nombre_ciudad) LIKE LOWER(?) OR LOWER(n2.nombre_ciudad) LIKE LOWER(?))\n"
+	          + "    OR hr.fecha_consulta = ?\n"
+	          + "LIMIT ? OFFSET ?";
+
+	     String countSql = "SELECT COUNT(*) \n"
+	          + "FROM historial_ruta hr\n"
+	          + "INNER JOIN ruta r ON hr.rutaConsultada = r.id_ruta\n"
+	          + "INNER JOIN nodo n1 ON r.origen_id = n1.id_nodo\n"
+	          + "INNER JOIN nodo n2 ON r.destino_id = n2.id_nodo\n"
+	          + "WHERE (LOWER(n1.nombre_ciudad) LIKE LOWER(?) OR LOWER(n2.nombre_ciudad) LIKE LOWER(?))\n"
+	          + "    OR hr.fecha_consulta = ?";
+
+	     List<HistorialRuta> lista = new ArrayList<>();
+	     int totalResultados = 0;
+
+	     try (PreparedStatement stmt = conexion.prepareStatement(selectSQL)) {
+	    	 int offset = (pagina <= 0 ? 0 : pagina - 1) * tamañoPagina;
+
+
+	         stmt.setString(1, "%" + nombre_ciudad + "%");
+	         stmt.setString(2, "%" + nombre_ciudad + "%");
+	         stmt.setDate(3, new java.sql.Date(fechaConsulta.getTime()));
+	         stmt.setInt(4, tamañoPagina);
+	         stmt.setInt(5, offset);
+	        
+	         try (ResultSet rs = stmt.executeQuery()) {
+	             while (rs.next()) {
+	                 HistorialRuta historial = new HistorialRuta();
+
+	                 Nodo origen = new Nodo();
+	                 origen.setNombre(rs.getString("origen"));
+
+	                 Nodo destino = new Nodo();
+	                 destino.setNombre(rs.getString("destino"));
+
+	                 Ruta ruta = new Ruta();
+	                 ruta.setOrigen(origen);
+	                 ruta.setDestino(destino);
+
+	                 historial.setIdHistorial(rs.getInt("id_historial"));
+	                 historial.setFechaConsulta(rs.getDate("fecha_consulta"));
+	                 historial.setRutaConsultada(ruta);
+
+	                 lista.add(historial);
+	                 
+	                 
+	             }
+	         }
+	     } catch (SQLException e) {
+	         e.printStackTrace(); 
+	     }
+	     try (PreparedStatement countStmt = conexion.prepareStatement(countSql)) {
+	         countStmt.setString(1, "%" + nombre_ciudad + "%");
+	         countStmt.setString(2, "%" + nombre_ciudad + "%");
+	         countStmt.setDate(3, new java.sql.Date(fechaConsulta.getTime()));
+
+	         try (ResultSet countRs = countStmt.executeQuery()) {
+	             if (countRs.next()) {
+	                 totalResultados = countRs.getInt(1);
+	             }
+	         }
+	     } catch (SQLException e) {
+	         e.printStackTrace();
+	     }
+	     
+	     return new PageRender<>(lista, pagina, tamañoPagina, totalResultados);
+	     
+	 }
+
 
 
 	@Override

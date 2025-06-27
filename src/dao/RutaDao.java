@@ -2,6 +2,8 @@ package dao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.time.LocalDate;
+import java.util.Map;
 import java.util.Optional;
 
 import model.Nodo;
@@ -27,4 +29,5 @@ public interface RutaDao {
 
 	Long guardarRuta(Long origen_id, Long destino_id ,double distancia);
 	
+	Map<Ruta, Integer> obtenerEstadisticaRuta(LocalDate fecha);
 }

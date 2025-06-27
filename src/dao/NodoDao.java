@@ -25,4 +25,5 @@ public interface NodoDao {
 	 int guardarNodo(Nodo nodo);
 	    Nodo obtenerNodoPorNombre(String nombre);
 void actualizarNodo(Nodo nodo);
+	Nodo obtenerNodoPorId(Long id_nodo);
 }

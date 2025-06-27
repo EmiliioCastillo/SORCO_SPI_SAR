@@ -13,8 +13,7 @@ ruta específica fue consultada dentro del sistema.                             
 Incluye:                                                                                  #
 - Identificador de la estadística.                                                        #
 - Objeto Ruta al que pertenece la estadística.                                            #
-- Cantidad de consultas registradas para dicha ruta.                                      #
-Esta entidad es útil para reportes y análisis de uso frecuente de rutas.                 #
+              
 ##########################################################################################
 MODIFICACIONES																			 #
 - 2025-05-26 - Creación inicial de la entidad. - EEC									 #
@@ -25,18 +24,13 @@ MODIFICACIONES																			 #
 public class EstadisticaRuta {
 		private Long idEstadistica;
 		private Ruta ruta;
-	    private int cantidadConsultas;
+	  
 		public Ruta getRuta() {
 			return ruta;
 		}
 		public void setRuta(Ruta ruta) {
 			this.ruta = ruta;
 		}
-		public int getCantidadConsultas() {
-			return cantidadConsultas;
-		}
-		public void setCantidadConsultas(int cantidadConsultas) {
-			this.cantidadConsultas = cantidadConsultas;
-		}
+	
 
 }

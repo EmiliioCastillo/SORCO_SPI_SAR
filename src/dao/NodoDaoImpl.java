@@ -123,6 +123,31 @@ public class NodoDaoImpl implements NodoDao{
 	     
 	     return nodo;  // Retorna el nodo si se encontró, o null si no existe
 	 }
+	 
+	 public Nodo obtenerNodoPorId(Long id_nodo) {
+	      
+	        String sql = "SELECT id_nodo, nombre_ciudad, latitud, longitud FROM nodo WHERE id_nodo = ?";
+
+	        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+
+	            ps.setLong(1, id_nodo);
+	            ResultSet rs = ps.executeQuery();
+
+	            if (rs.next()) {
+	                nodo = new Nodo();
+	                nodo.setId_nodo(rs.getLong("id_nodo"));
+	                nodo.setNombre(rs.getString("nombre_ciudad"));
+	                nodo.setLatitud(rs.getDouble("latitud"));
+	                nodo.setLongitud(rs.getDouble("longitud"));
+	            }
+
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	        }
+
+	        return nodo;
+	    }
+	
 		   
 }
 
