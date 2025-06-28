@@ -7,11 +7,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import config.Conexion;
+import dto.RutaHistorialDTO;
 import model.EstadisticaRuta;
 import model.Nodo;
 import model.Ruta;
@@ -119,6 +122,44 @@ public class RutaDaoImpl implements RutaDao {
 		 return conteoRutas;
 	}
 
+	@Override
+	public List<RutaHistorialDTO> obtenerDatosParaPDF() {
+		List<RutaHistorialDTO> resultados = new ArrayList<>();
+	 String sql = "SELECT\n"
+	 		+ "    hr.id_historial,\n"
+	 		+ "    hr.fecha_consulta,\n"
+	 		+ "    r.id_ruta,\n"
+	 		+ "    origen.nombre_ciudad AS nombre_origen,\n"
+	 		+ "    destino.nombre_ciudad AS nombre_destino,\n"
+	 		+ "    r.distancia\n"
+	 		+ "FROM historial_ruta hr\n"
+	 		+ "JOIN ruta r ON hr.rutaConsultada = r.id_ruta\n"
+	 		+ "JOIN nodo origen ON r.origen_id = origen.id_nodo\n"
+	 		+ "JOIN nodo destino ON r.destino_id = destino.id_nodo;";
+	 
+	 try(PreparedStatement stmt = conexion.prepareStatement(sql)) {
+		  ResultSet rs = stmt.executeQuery();
+		  while(rs.next()) {
+			  RutaHistorialDTO dto = new RutaHistorialDTO();
+	            dto.setIdHistorial(rs.getLong("id_historial"));
+	            dto.setFechaConsulta(rs.getDate("fecha_consulta").toLocalDate());
+	            dto.setIdRuta(rs.getLong("id_ruta"));
+	            dto.setNombreOrigen(rs.getString("nombre_origen"));
+	            dto.setNombreDestino(rs.getString("nombre_destino"));
+	            dto.setDistancia(rs.getDouble("distancia"));
+	            resultados.add(dto);  
+			  
+			  
+		  }
+		 
+	
+		 
+	 }catch(SQLException e) {
+		 e.printStackTrace();
+	 }
+	return resultados;
+	 
+	}
 
 	
 	 

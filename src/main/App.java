@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import dto.RutaHistorialDTO;
 import javafx.application.Application;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -45,6 +46,7 @@ public class App extends Application {
 	//Aqui inicializamos el constructor con la conexion
 	private NodoService nodoService = new NodoServiceImpl();
 	private HistorialRutaService hrService = new HistorialRutaServiceImpl();
+	private RutaService rutaService = new RutaServiceImpl();
     private GridPane mainGrid;
     private Stage primaryStage;
     private Scene mainScene;
@@ -328,9 +330,11 @@ public class App extends Application {
         grid.setAlignment(Pos.CENTER);
         grid.setVgap(20);
         grid.setPadding(new Insets(20));
-
-        Label titulo = new Label("Top Ciudades Más Consultadas");
+        
+        Button exportarPDF = new Button("exportar PDF");
+        Label titulo = new Label("TOP CIUDADES MAS CONSULTADAS EN EL DIA");
         grid.add(titulo, 0, 0);
+       
 
         RutaService service = new RutaServiceImpl();
         LocalDate fecha = LocalDate.now(); // Usar fecha actual
@@ -339,7 +343,7 @@ public class App extends Application {
 
         // Mostrar gráfico de ciudades
         if (resultado.getCiudades() == null || resultado.getCiudades().isEmpty()) {
-            Label noData = new Label("No se encontraron datos estadísticos");
+            Label noData = new Label("No se encontraron consultas realizadas para mostrar datos el dia de hoy");
             noData.setStyle("-fx-text-fill: red;");
             grid.add(noData, 0, 1);
         } else {
@@ -348,8 +352,14 @@ public class App extends Application {
 
         // Mostrar ciudad más frecuente
         Label resumen = new Label("Ciudad más consultada: " + resultado.getCiudadMasFrecuente());
+        
+        exportarPDF.setOnAction(e-> {
+        		
+        	 rutaService.exportarPDF("reporte_rutas.pdf");
+        });
+        
         grid.add(resumen, 0, 2);
-
+        grid.add(exportarPDF, 0, 3);
         agregarEscenaConVolver(grid);
     }
 

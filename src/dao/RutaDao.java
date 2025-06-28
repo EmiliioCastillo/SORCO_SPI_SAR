@@ -3,9 +3,11 @@ package dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import dto.RutaHistorialDTO;
 import model.Nodo;
 import model.Ruta;
 /*
@@ -28,6 +30,8 @@ MODIFICACIONES																			 #
 public interface RutaDao {
 
 	Long guardarRuta(Long origen_id, Long destino_id ,double distancia);
-	
+		
 	Map<Ruta, Integer> obtenerEstadisticaRuta(LocalDate fecha);
+	
+	List<RutaHistorialDTO> obtenerDatosParaPDF();
 }
