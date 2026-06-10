@@ -62,7 +62,14 @@ Esto levanta un servidor HTTP local en el puerto 5000.
 
 ✅ Verificar que el servicio funciona
 
+
+
 Puede hacer una prueba ejecutando el siguiente comando (usando coordenadas de ejemplo):
 
 curl "http://127.0.0.1:5000/route/v1/driving/13.388860,52.517037;13.385983,52.496891?steps=true"
 Si el servidor está corriendo correctamente, recibirá una respuesta en formato JSON con los pasos de la ruta calculada.
+
+
+
+![WhatsApp Video 2026-06-10 at 19 44 26](https://github.com/user-attachments/assets/a9173a12-67fb-4a24-a23e-6f835175fa6d)
+
